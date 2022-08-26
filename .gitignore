@@ -10,3 +10,9 @@
 
 # Built Visual Studio Code Extensions
 *.vsix
+obj/Debug/net6.0/.NETCoreApp,Version=v6.0.AssemblyAttributes.cs
+obj/Debug/net6.0/Aizu0718.AssemblyInfo.cs
+obj/Debug/net6.0/Aizu0718.AssemblyInfoInputs.cache
+obj/Debug/net6.0/Aizu0718.csproj.AssemblyReference.cache
+obj/Debug/net6.0/Aizu0718.GeneratedMSBuildEditorConfig.editorconfig
+obj/Debug/net6.0/Aizu0718.GlobalUsings.g.cs
