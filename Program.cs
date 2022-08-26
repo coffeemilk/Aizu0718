@@ -1,9 +1,10 @@
 ﻿// See https://aka.ms/new-console-template for more information
 // https://onlinejudge.u-aizu.ac.jp/challenges/search/titles/0718
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
+using System.Linq;
 
 internal class Program{
 
@@ -30,44 +31,63 @@ internal class Program{
             MoveBallFromSourceToTarget(operation, boxes);
         }
 
-        return CountBallsInBoxes(boxes);
+        return CreateBoxNumberList(boxes);
     }
 
-    static IEnumerable<int> CountBallsInBoxes(IEnumerable<Box> boxes)
+    static IEnumerable<int> CreateBoxNumberList(IEnumerable<Box> boxes)
     {
-        var numOfBalls = new List<int>();
+        var boxNumberList = new List<KeyValuePair<int, int>>();
         foreach(var box in boxes)
         {
-            numOfBalls.Add(box.NumOfBall);
+            var boxNumber = box.Number;
+            foreach(var ball in box.Balls)
+            {
+                boxNumberList.Add(new KeyValuePair<int, int>(ball.Number, boxNumber));
+            }
         }
 
-        return numOfBalls;
+        return boxNumberList.OrderBy(x=> x.Key).Select(y => y.Value);
     }
-    static void MoveBallFromSourceToTarget(KeyValuePair<int, int> operation, List<Box> boxes)
+    static void MoveBallFromSourceToTarget(KeyValuePair<int, int> operation, IEnumerable<Box> boxes)
     {
-        var sourceBoxIndex = operation.Key;
+        var sourceBallIndex = operation.Key;
         var targetBoxIndex = operation.Value;
-        MoveBallFromSource(boxes, sourceBoxIndex);
-        MoveBallTarget(boxes, targetBoxIndex);
+        var ballToMove = MoveBallFromSource(boxes, sourceBallIndex);
+        MoveBallToTarget(boxes, targetBoxIndex, ballToMove);
     }
 
-    static void MoveBallFromSource(List<Box> boxes, int sourceBoxIndex)
+    static Ball MoveBallFromSource(IEnumerable<Box> boxes, int sourceBallIndex)
     {
-        boxes[sourceBoxIndex-1].NumOfBall--;
+        int foundIndex;
 
+        foreach(var box in boxes)
+        {
+            foreach(var ball in box.Balls)
+            {
+                if (ball.Number == sourceBallIndex)
+                {
+                    foundIndex = box.Number;
+                    box.Balls.Remove(ball);
+                    return ball;
+                }
+            }
+        }
+
+        return null;
     }
-    static void MoveBallTarget(List<Box> boxes, int targetBoxIndex)
+
+    static void MoveBallToTarget(IEnumerable<Box> boxes, int targetBoxIndex,  Ball ball)
     {
-        boxes[targetBoxIndex-1].NumOfBall++;
-        
+        var box = boxes.First(x => x.Number == targetBoxIndex);
+        box.Balls.Add(ball);
     }
 
     static List<Box> CreateBoxes(int count)
     {
         var boxes = new List<Box>();
-        for(int index = 0; index < count; index++)
+        for(int index = 1; index <= count; index++)
         {
-            var box = new Box(index+1);
+            var box = new Box(new Ball(index), index);
             boxes.Add(box);
         }
 
@@ -136,11 +156,24 @@ internal class Program{
 
     internal class Box
     {
-        internal Box(int numOfBall)
+        internal Box(Ball ball, int number)
         {
-            NumOfBall = numOfBall;
+            Number = number;
+            Balls.Add(ball);
         }
-        internal int NumOfBall {get; set;} = 1;
+        
+        internal int Number {get;}
+        internal List<Ball> Balls {get;} = new List<Ball>();
+    }
+
+    internal class Ball
+    {
+        internal Ball(int number)
+        {
+            Number = number;
+        }
+
+        internal int Number {get;}
     }
 
 }
