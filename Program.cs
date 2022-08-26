@@ -14,39 +14,35 @@ internal class Program{
         //箱 i (1≦i≦N) には最初，ボール i が入っていた．
         //JOI 高校の生徒である葵は，この状態から箱とボールに対して M 回の操作を行った．j 回目 (1≦j≦M) の操作は，次のように行われた．
 
-        (List<KeyValuePair<int, int>> operations, int numOfBox) = Initialize();
+        (IReadOnlyList<KeyValuePair<int, int>> operations, int numOfBox) = Initialize();
         //ボール Xj が入っている箱を探し，その箱からボール Xj を取り出す．その後，箱 Yj にボール Xj を入れる．
-        var boxSituation = MoveBall(operations, numOfBox);
+        var numberOfBoxesForEachBall = MoveBall(operations, numOfBox);
         //葵が M 回の操作をすべて終えた後，N 個のボールがそれぞれどの箱に入っているかを求めよ．
-        ShowBoxSituation(boxSituation);
+        ShowNumberOfBoxesForEachBall(numberOfBoxesForEachBall);
 
-        Console.ReadKey();
+        //Console.ReadKey();
     }
 
-    static IEnumerable<int> MoveBall(List<KeyValuePair<int, int>> operations, int numOfBox)
+    static IEnumerable<int> MoveBall(IReadOnlyList<KeyValuePair<int, int>> operations, int numOfBoxex)
     {
-        var boxes = CreateBoxes(numOfBox);
+        (IEnumerable<Box> boxes, IEnumerable<Ball> balls) = CreateBoxesAndBalls(numOfBoxex);
         foreach(var operation in operations)
         {
             MoveBallFromSourceToTarget(operation, boxes);
         }
 
-        return CreateBoxNumberList(boxes);
+        return CreateBoxNumberList(balls);
     }
 
-    static IEnumerable<int> CreateBoxNumberList(IEnumerable<Box> boxes)
+    static IEnumerable<int> CreateBoxNumberList(IEnumerable<Ball> balls)
     {
-        var boxNumberList = new List<KeyValuePair<int, int>>();
-        foreach(var box in boxes)
+        var boxNumberList = new List<int>();
+        foreach(var ball in balls) //ballsの順番は1から降順
         {
-            var boxNumber = box.Number;
-            foreach(var ball in box.Balls)
-            {
-                boxNumberList.Add(new KeyValuePair<int, int>(ball.Number, boxNumber));
-            }
+            boxNumberList.Add(ball.BoxNumber);
         }
 
-        return boxNumberList.OrderBy(x=> x.Key).Select(y => y.Value);
+        return boxNumberList;
     }
     static void MoveBallFromSourceToTarget(KeyValuePair<int, int> operation, IEnumerable<Box> boxes)
     {
@@ -58,16 +54,14 @@ internal class Program{
 
     static Ball MoveBallFromSource(IEnumerable<Box> boxes, int sourceBallIndex)
     {
-        int foundIndex;
-
         foreach(var box in boxes)
         {
             foreach(var ball in box.Balls)
             {
                 if (ball.Number == sourceBallIndex)
                 {
-                    foundIndex = box.Number;
                     box.Balls.Remove(ball);
+                    ball.BoxNumber = 0;
                     return ball;
                 }
             }
@@ -76,45 +70,49 @@ internal class Program{
         return null;
     }
 
-    static void MoveBallToTarget(IEnumerable<Box> boxes, int targetBoxIndex,  Ball ball)
+    static void MoveBallToTarget(IEnumerable<Box> boxes, int targetBoxIndex, Ball ball)
     {
         var box = boxes.First(x => x.Number == targetBoxIndex);
         box.Balls.Add(ball);
+        ball.BoxNumber = box.Number;
     }
 
-    static List<Box> CreateBoxes(int count)
+    static (IEnumerable<Box> boxes, IEnumerable<Ball> balls) CreateBoxesAndBalls(int count)
     {
         var boxes = new List<Box>();
+        var balls = new List<Ball>();
         for(int index = 1; index <= count; index++)
         {
-            var box = new Box(new Ball(index), index);
+            var ball = new Ball(index);
+            var box = new Box(ball, index);
             boxes.Add(box);
+            balls.Add(ball);
         }
 
-        return boxes;
+        return (boxes, balls);
     }
 
-    static void ShowBoxSituation(IEnumerable<int> boxSituation)
+    static void ShowNumberOfBoxesForEachBall(IEnumerable<int> boxSituation)
     {
         foreach(var inBox in boxSituation)
         {
             Console.WriteLine(inBox);
         }
     }
-    static (List<KeyValuePair<int, int>> operations, int numOfBox) Initialize()
+    static (IReadOnlyList<KeyValuePair<int, int>> operations, int numOfBox) Initialize()
     {
         var inputData = ReadInputData;
-        (List<KeyValuePair<int, int>> operations, int numOfBox)  = CreateOperation(inputData);
+        (IReadOnlyList<KeyValuePair<int, int>> operations, int numOfBox)  = CreateOperation(inputData);
 
         return (operations, numOfBox);
     }
 
-    static (List<KeyValuePair<int, int>> operations, int numOfBox) CreateOperation(IEnumerable<string> inputData)
+    static (IReadOnlyList<KeyValuePair<int, int>> operations, int numOfBox) CreateOperation(IEnumerable<string> inputData)
     {
         var numOfBallAndnumOfOperation = inputData.ElementAt(0).Split(" ");
         int N = int.Parse(numOfBallAndnumOfOperation[0]);
         int M = int.Parse(numOfBallAndnumOfOperation[1]);
-        
+
         var sourceboxAndtargetboxData = inputData.ToList().GetRange(1, inputData.Count()-1);
 
         var operations = new List<KeyValuePair<int, int>>();
@@ -127,8 +125,7 @@ internal class Program{
             operations.Add(pair);
         }
 
-        return (operations, N);
-
+        return (operations.AsReadOnly(), N);
     }
 
     static IEnumerable<string> ReadInputData
@@ -149,7 +146,7 @@ internal class Program{
                     input.Add(line);
                 }
             }while(string.IsNullOrEmpty(line) == false);
-            
+
             return input;
         }
     }
@@ -161,7 +158,7 @@ internal class Program{
             Number = number;
             Balls.Add(ball);
         }
-        
+
         internal int Number {get;}
         internal List<Ball> Balls {get;} = new List<Ball>();
     }
@@ -171,9 +168,12 @@ internal class Program{
         internal Ball(int number)
         {
             Number = number;
+            BoxNumber = number;
         }
 
         internal int Number {get;}
+
+        internal int BoxNumber {get; set;}
     }
 
 }
